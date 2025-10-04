@@ -1,7 +1,7 @@
 use macroquad::prelude::*;
 use nalgebra::{Point3, UnitQuaternion, UnitVector3, Vector3};
 
-use crate::{Plane, generators::OrientedPoint};
+use crate::{generators::OrientedPoint, Plane, Scalar};
 
 #[derive(Default)]
 pub struct Viewer(Vec<Box<dyn Drawable>>);
@@ -109,23 +109,30 @@ pub fn draw_quad(vertices: [Vertex; 4], texture: Option<Texture2D>) {
     });
 }
 
-impl Drawable for Plane<f32> {
+pub struct ColoredPlane(Color, Plane<f32>);
+
+impl Plane<f32> {
+    pub fn with_color(self, color: Color) -> ColoredPlane {
+        ColoredPlane(color, self)
+    }
+}
+
+impl Drawable for ColoredPlane {
     fn draw(&self) {
         let rotation =
-            UnitQuaternion::rotation_between_axis(&Vector3::z_axis(), &self.normal).unwrap();
+            UnitQuaternion::rotation_between_axis(&Vector3::z_axis(), &self.1.normal).unwrap();
 
         let extent = vec2(25.0, 25.0);
         let primary = extent.x * vec3_from_vector3(rotation * Vector3::x_axis());
         let secondary = extent.y * vec3_from_vector3(rotation * Vector3::y_axis());
-        let position = vec3_from_point3(self.position);
-        let color = color_u8!(255, 255, 255, 150);
+        let position = vec3_from_point3(self.1.position);
 
         draw_quad(
             [
-                Vertex::new2(position - primary - secondary, vec2(0., 0.), color),
-                Vertex::new2(position - primary + secondary, vec2(0., 1.), color),
-                Vertex::new2(position + primary + secondary, vec2(1., 1.), color),
-                Vertex::new2(position + primary - secondary, vec2(1., 0.), color),
+                Vertex::new2(position - primary - secondary, vec2(0., 0.), self.0),
+                Vertex::new2(position - primary + secondary, vec2(0., 1.), self.0),
+                Vertex::new2(position + primary + secondary, vec2(1., 1.), self.0),
+                Vertex::new2(position + primary - secondary, vec2(1., 0.), self.0),
             ],
             None
         );

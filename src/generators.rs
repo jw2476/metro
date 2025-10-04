@@ -75,13 +75,21 @@ pub fn sample_random<T: Scalar + SampleUniform>(
         .collect()
 }
 
-pub struct NoiseAlongZ<T: Scalar> {
+pub struct NoiseAlongZ<T: Scalar + SampleUniform + Copy> {
     pub amplitude: T,
 }
 
 impl<T: Scalar + SampleUniform + Copy> ShapeModifier3D<T> for NoiseAlongZ<T> {
     fn modify(&self, _: T, _: T, point: OrientedPoint<T>) -> OrientedPoint<T> {
         point + (Vector3::z() * rand::rng().random_range(-self.amplitude..self.amplitude))
+    }
+}
+
+pub struct OffsetInWorldSpace<T: Scalar>(pub Vector3<T>);
+
+impl<T: Scalar> ShapeModifier3D<T> for OffsetInWorldSpace<T> {
+    fn modify(&self, _: T, _: T, point: OrientedPoint<T>) -> OrientedPoint<T> {
+        point.clone() + (point.rotation.inverse() * self.0.clone())
     }
 }
 
